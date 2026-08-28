@@ -19,7 +19,7 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigate
 }) => {
   return (
-    <header className="sticky top-0 z-30 w-full glass-panel border-b border-slate-200/80 dark:border-slate-800/80 px-4 py-3 transition-all lg:hidden">
+    <header className="sticky top-0 z-30 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 px-4 py-3 transition-all lg:hidden">
       <div className="max-w-4xl mx-auto flex items-center justify-between">
         
         {/* Brand Logo */}
@@ -30,14 +30,14 @@ export const Header: React.FC<HeaderProps> = ({
           }}
           className="flex items-center gap-2.5 cursor-pointer group"
         >
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-indigo-500 text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
-            <Sparkles className="w-5 h-5 animate-pulse-subtle" />
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+            <Sparkles className="w-4 h-4 animate-pulse-subtle" />
           </div>
           <div>
-            <h1 className="font-black text-lg leading-none tracking-widest uppercase text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+            <h1 className="font-extrabold text-base leading-none tracking-wider uppercase text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
               SPELLON
             </h1>
-            <p className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+            <p className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
               Learn. Speak. Improve.
             </p>
           </div>
@@ -50,9 +50,9 @@ export const Header: React.FC<HeaderProps> = ({
           {profile && (
             <div 
               title="Player XP"
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/50 text-amber-600 dark:text-amber-400 font-black text-xs"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-400/15 text-amber-600 dark:text-amber-400 font-bold text-xs border border-amber-300/30"
             >
-              <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
               <span>{profile.xp || 320} XP</span>
             </div>
           )}
@@ -60,9 +60,9 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Streak Counter */}
           <div 
             title="Current Practice Streak"
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-orange-50 dark:bg-orange-950/50 border border-orange-200 dark:border-orange-800/50 text-orange-600 dark:text-orange-400 font-black text-xs"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-50 dark:bg-orange-950/50 border border-orange-200/60 dark:border-orange-800/60 text-orange-600 dark:text-orange-400 font-bold text-xs"
           >
-            <Flame className="w-4 h-4 fill-orange-500 text-orange-500 animate-bounce-gentle" />
+            <Flame className="w-3.5 h-3.5 fill-orange-500 text-orange-500 animate-bounce-gentle" />
             <span>{stats.currentStreak}d</span>
           </div>
 
@@ -73,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
               onUpdateSettings({ soundEnabled: !settings.soundEnabled });
             }}
             title={settings.soundEnabled ? "Mute sound effects" : "Enable sound effects"}
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             {settings.soundEnabled ? <Volume2 className="w-4 h-4 text-indigo-600" /> : <VolumeX className="w-4 h-4 text-slate-400" />}
           </button>
@@ -85,7 +85,7 @@ export const Header: React.FC<HeaderProps> = ({
               onUpdateSettings({ theme: settings.theme === 'dark' ? 'light' : 'dark' });
             }}
             title="Toggle theme"
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             {settings.theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
           </button>
@@ -97,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
               onNavigate('/settings');
             }}
             title="Settings"
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <Settings className="w-4 h-4" />
           </button>
