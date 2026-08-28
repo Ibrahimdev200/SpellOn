@@ -1,21 +1,14 @@
 import type { PronunciationResult } from '../types';
-import { speechService } from './speechService';
 
-declare global {
-  interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
-  }
-}
-
-class PronunciationService {
+export class PronunciationService {
   private recognition: any = null;
-  private isListening: boolean = false;
+  private isSupported: boolean = false;
 
   constructor() {
     if (typeof window !== 'undefined') {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
+        this.isSupported = true;
         this.recognition = new SpeechRecognition();
         this.recognition.continuous = false;
         this.recognition.interimResults = false;
@@ -25,177 +18,150 @@ class PronunciationService {
   }
 
   public isSpeechRecognitionSupported(): boolean {
-    return !!this.recognition;
-  }
-
-  public speakWord(word: string, rate: 'slow' | 'normal' | 'fast' = 'normal', onEnd?: () => void): void {
-    speechService.speak(word, rate, onEnd);
+    return this.isSupported;
   }
 
   public startRecording(
-    onResult: (spokenText: string) => void,
-    onError: (errorMessage: string) => void,
+    onResult: (transcript: string) => void,
+    onError: (error: string) => void,
     onStart?: () => void
   ): void {
-    if (!this.recognition) {
-      onError('Your browser does not support speech recognition. Try typing mode instead!');
+    if (!this.isSupported || !this.recognition) {
+      onError('Speech recognition is not supported in this browser. Please try Chrome, Edge, or Safari.');
       return;
     }
 
-    if (this.isListening) {
-      this.stopRecording();
-    }
+    try {
+      this.recognition.onstart = () => {
+        if (onStart) onStart();
+      };
 
-    this.recognition.onstart = () => {
-      this.isListening = true;
-      if (onStart) onStart();
-    };
-
-    this.recognition.onresult = (event: any) => {
-      this.isListening = false;
-      if (event.results && event.results.length > 0) {
+      this.recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
         onResult(transcript);
-      } else {
-        onError('Could not hear clearly. Please try speaking again.');
-      }
-    };
+      };
 
-    this.recognition.onerror = (event: any) => {
-      this.isListening = false;
-      let msg = 'Speech recognition error occurred.';
-      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-        msg = 'Microphone access is unavailable or denied on this device.';
-      } else if (event.error === 'no-speech') {
-        msg = 'No speech detected. Please speak louder and try again.';
-      } else if (event.error === 'network') {
-        msg = 'Network issue with speech recognition service.';
-      }
-      onError(msg);
-    };
+      this.recognition.onerror = (event: any) => {
+        let msg = 'Speech recognition error. Please try again.';
+        if (event.error === 'not-allowed') {
+          msg = 'Microphone permission denied. Please allow mic access or use typing practice.';
+        } else if (event.error === 'no-speech') {
+          msg = 'No speech detected. Please speak clearly into your microphone.';
+        }
+        onError(msg);
+      };
 
-    this.recognition.onend = () => {
-      this.isListening = false;
-    };
-
-    try {
       this.recognition.start();
-    } catch {
-      this.isListening = false;
-      onError('Unable to start microphone. Please try again.');
+    } catch (e) {
+      onError('Could not start recording. Please try again.');
     }
   }
 
   public stopRecording(): void {
-    if (this.recognition && this.isListening) {
+    if (this.recognition) {
       try {
         this.recognition.stop();
-      } catch {
+      } catch (e) {
         // Ignored
       }
-      this.isListening = false;
     }
   }
 
-  public normalizeText(text: string): string {
-    return text
-      .toLowerCase()
-      .trim()
-      .replace(/[.,/#!$%^&*;:{}=\-_`~()?"']/g, '')
-      .replace(/\s+/g, ' ');
-  }
+  public calculateSimilarity(target: string, input: string): number {
+    const s1 = target.toLowerCase().trim();
+    const s2 = input.toLowerCase().trim();
 
-  private getLevenshteinDistance(a: string, b: string): number {
-    const matrix: number[][] = [];
+    if (s1 === s2) return 100;
 
-    for (let i = 0; i <= b.length; i++) {
-      matrix[i] = [i];
+    const track = Array(s2.length + 1).fill(null).map(() =>
+      Array(s1.length + 1).fill(null)
+    );
+
+    for (let i = 0; i <= s1.length; i += 1) {
+      track[0][i] = i;
     }
-    for (let j = 0; j <= a.length; j++) {
-      matrix[0][j] = j;
+    for (let j = 0; j <= s2.length; j += 1) {
+      track[j][0] = j;
     }
 
-    for (let i = 1; i <= b.length; i++) {
-      for (let j = 1; j <= a.length; j++) {
-        if (b.charAt(i - 1) === a.charAt(j - 1)) {
-          matrix[i][j] = matrix[i - 1][j - 1];
-        } else {
-          matrix[i][j] = Math.min(
-            matrix[i - 1][j - 1] + 1,
-            Math.min(
-              matrix[i][j - 1] + 1,
-              matrix[i - 1][j] + 1
-            )
-          );
-        }
+    for (let j = 1; j <= s2.length; j += 1) {
+      for (let i = 1; i <= s1.length; i += 1) {
+        const indicator = s1[i - 1] === s2[j - 1] ? 0 : 1;
+        track[j][i] = Math.min(
+          track[j][i - 1] + 1,
+          track[j - 1][i] + 1,
+          track[j - 1][i - 1] + indicator
+        );
       }
     }
 
-    return matrix[b.length][a.length];
+    const distance = track[s2.length][s1.length];
+    const maxLength = Math.max(s1.length, s2.length);
+    const score = Math.max(0, Math.round((1 - distance / maxLength) * 100));
+
+    return score;
   }
 
   public assessPronunciation(targetWord: string, recognizedSpeech: string): PronunciationResult {
-    const target = this.normalizeText(targetWord);
-    const recognized = this.normalizeText(recognizedSpeech);
+    const score = this.calculateSimilarity(targetWord, recognizedSpeech);
+    const xpEarned = score >= 80 ? 10 : 2;
 
-    if (target === recognized) {
+    if (score === 100) {
       return {
         score: 100,
         rating: 'Perfect',
         stars: 5,
-        feedback: '🎉 Perfect! You pronounced the word exactly right!',
+        feedback: '🎉 PERFECT! Outstanding pronunciation!',
         isMatch: true,
         targetWord,
-        recognizedWord: recognizedSpeech
+        recognizedWord: recognizedSpeech,
+        xpEarned
+      };
+    } else if (score >= 90) {
+      return {
+        score,
+        rating: 'Excellent',
+        stars: 5,
+        feedback: '🎉 EXCELLENT! Your pronunciation is super clear!',
+        isMatch: true,
+        targetWord,
+        recognizedWord: recognizedSpeech,
+        xpEarned
+      };
+    } else if (score >= 75) {
+      return {
+        score,
+        rating: 'Very Good',
+        stars: 4,
+        feedback: '👍 VERY GOOD! Good attempt, keep it up!',
+        isMatch: true,
+        targetWord,
+        recognizedWord: recognizedSpeech,
+        xpEarned
+      };
+    } else if (score >= 60) {
+      return {
+        score,
+        rating: 'Keep Practicing',
+        stars: 3,
+        feedback: '🔄 KEEP PRACTICING! Listen to the audio and speak again.',
+        isMatch: false,
+        targetWord,
+        recognizedWord: recognizedSpeech,
+        xpEarned
+      };
+    } else {
+      return {
+        score,
+        rating: 'Try Again',
+        stars: 2,
+        feedback: '❌ TRY AGAIN! Listen carefully to the word sound.',
+        isMatch: false,
+        targetWord,
+        recognizedWord: recognizedSpeech,
+        xpEarned
       };
     }
-
-    const maxLen = Math.max(target.length, recognized.length);
-    const distance = this.getLevenshteinDistance(target, recognized);
-    let similarityRatio = (maxLen - distance) / maxLen;
-
-    if (recognized.includes(target)) {
-      similarityRatio = Math.max(similarityRatio, 0.92);
-    }
-
-    const percentage = Math.max(0, Math.min(100, Math.round(similarityRatio * 100)));
-
-    let rating: PronunciationResult['rating'];
-    let stars: number;
-    let feedback: string;
-    let isMatch = false;
-
-    if (percentage >= 90) {
-      rating = 'Excellent';
-      stars = 5;
-      feedback = '🎉 Excellent! You pronounced the word correctly.';
-      isMatch = true;
-    } else if (percentage >= 75) {
-      rating = 'Very Good';
-      stars = 4;
-      feedback = '👍 Very Good! Almost perfect pronunciation.';
-      isMatch = true;
-    } else if (percentage >= 60) {
-      rating = 'Keep Practicing';
-      stars = 3;
-      feedback = '🔄 Keep Practicing! Listen closely to the audio again.';
-      isMatch = false;
-    } else {
-      rating = 'Try Again';
-      stars = 2;
-      feedback = '❌ Not quite! Listen again and try to pronounce the word.';
-      isMatch = false;
-    }
-
-    return {
-      score: percentage,
-      rating,
-      stars,
-      feedback,
-      isMatch,
-      targetWord,
-      recognizedWord: recognizedSpeech
-    };
   }
 }
 

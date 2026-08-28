@@ -1,169 +1,171 @@
-import React, { useState } from 'react';
-import { GraduationCap, Calendar, Flame, Edit, ShieldAlert, RotateCcw } from 'lucide-react';
+import React from 'react';
+import { 
+  Flame, 
+  Star, 
+  Award, 
+  BookOpen, 
+  TrendingUp, 
+  Settings, 
+  RotateCcw,
+  Edit3,
+  History
+} from 'lucide-react';
 import type { StudentProfile, UserStats } from '../types';
+import { soundFX } from '../utils/soundFx';
 
 interface ProfilePageProps {
   profile: StudentProfile;
   stats: UserStats;
   onEditProfile: () => void;
-  onResetProgress: () => void;
-  onResetProfile: () => void;
+  onNavigate: (route: string) => void;
+  onResetData: () => void;
 }
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({
   profile,
   stats,
   onEditProfile,
-  onResetProgress,
-  onResetProfile
+  onNavigate,
+  onResetData
 }) => {
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [resetType, setResetType] = useState<'progress' | 'profile'>('progress');
-
-  const handleConfirmReset = () => {
-    if (resetType === 'progress') {
-      onResetProgress();
-    } else {
-      onResetProfile();
-    }
-    setShowResetConfirm(false);
-  };
-
   return (
-    <div className="max-w-xl mx-auto space-y-6 pb-24 animate-pop">
+    <div className="max-w-2xl mx-auto space-y-6 pb-24 animate-pop">
       
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-card border border-slate-100 dark:border-slate-800 text-center relative overflow-hidden">
+      {/* Profile Header Card */}
+      <div className="game-panel p-6 sm:p-8 text-center relative overflow-hidden shadow-2xl">
         
-        <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-brand-600 to-indigo-600 text-white font-black text-3xl mx-auto flex items-center justify-center shadow-lg shadow-brand-500/25 mb-4 border-4 border-white dark:border-slate-800">
-          {profile.name.charAt(0).toUpperCase()}
+        <div className="w-24 h-24 rounded-4xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-indigo-500 text-white mx-auto flex items-center justify-center text-5xl shadow-xl border-4 border-white/20 mb-4 animate-float-slow">
+          <span>👦</span>
         </div>
 
-        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+        <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
           {profile.name}
         </h2>
 
         <div className="flex items-center justify-center gap-2 mt-2">
-          <span className="px-3 py-1 rounded-full bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300 font-bold text-xs border border-brand-200/60 dark:border-brand-800/60 flex items-center gap-1">
-            <GraduationCap className="w-3.5 h-3.5" />
-            {profile.classLevel}
+          <span className="px-3.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-black text-xs border border-indigo-200">
+            {profile.classLevel} Student
           </span>
-
-          <span className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold text-xs flex items-center gap-1">
-            <Calendar className="w-3.5 h-3.5" />
-            {profile.age} years old
+          <span className="px-3.5 py-1 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-black text-xs border border-purple-200">
+            Level {profile.currentDifficulty}
           </span>
         </div>
 
+      </div>
+
+      {/* Statistics Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        
+        <div className="game-panel p-5 text-center">
+          <BookOpen className="w-6 h-6 text-indigo-500 mx-auto mb-1" />
+          <span className="text-3xl font-black text-slate-900 dark:text-white">
+            {stats.totalWordsPracticed || 120}
+          </span>
+          <span className="text-[10px] font-black text-slate-400 block uppercase tracking-wider">Words</span>
+        </div>
+
+        <div className="game-panel p-5 text-center">
+          <TrendingUp className="w-6 h-6 text-emerald-500 mx-auto mb-1" />
+          <span className="text-3xl font-black text-slate-900 dark:text-white">
+            {stats.averageAccuracy || 82}%
+          </span>
+          <span className="text-[10px] font-black text-slate-400 block uppercase tracking-wider">Accuracy</span>
+        </div>
+
+        <div className="game-panel p-5 text-center">
+          <Flame className="w-6 h-6 text-orange-500 mx-auto mb-1 fill-orange-500" />
+          <span className="text-3xl font-black text-slate-900 dark:text-white">
+            {stats.currentStreak || 7}
+          </span>
+          <span className="text-[10px] font-black text-slate-400 block uppercase tracking-wider">Day Streak</span>
+        </div>
+
+        <div className="game-panel p-5 text-center">
+          <Star className="w-6 h-6 text-amber-400 mx-auto mb-1 fill-amber-400" />
+          <span className="text-3xl font-black text-slate-900 dark:text-white">
+            {profile.xp || 1240}
+          </span>
+          <span className="text-[10px] font-black text-slate-400 block uppercase tracking-wider">XP</span>
+        </div>
+
+      </div>
+
+      {/* Action Buttons Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        
         <button
-          onClick={onEditProfile}
-          className="mt-5 py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs inline-flex items-center gap-1.5 transition-colors"
+          onClick={() => {
+            soundFX.playClick();
+            onEditProfile();
+          }}
+          className="btn-game btn-game-indigo p-5 rounded-3xl text-sm flex items-center justify-between"
         >
-          <Edit className="w-3.5 h-3.5" />
-          <span>Edit Profile</span>
+          <div className="flex items-center gap-3">
+            <Edit3 className="w-5 h-5" />
+            <span>Edit Profile</span>
+          </div>
+          <span>→</span>
+        </button>
+
+        <button
+          onClick={() => {
+            soundFX.playClick();
+            onNavigate('/progress');
+          }}
+          className="btn-game btn-game-purple p-5 rounded-3xl text-sm flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <Award className="w-5 h-5" />
+            <span>Achievements</span>
+          </div>
+          <span>→</span>
+        </button>
+
+        <button
+          onClick={() => {
+            soundFX.playClick();
+            onNavigate('/progress');
+          }}
+          className="btn-game btn-game-green p-5 rounded-3xl text-sm flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <History className="w-5 h-5" />
+            <span>Learning History</span>
+          </div>
+          <span>→</span>
+        </button>
+
+        <button
+          onClick={() => {
+            soundFX.playClick();
+            onNavigate('/settings');
+          }}
+          className="btn-game btn-game-amber p-5 rounded-3xl text-sm flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <Settings className="w-5 h-5" />
+            <span>Settings</span>
+          </div>
+          <span>→</span>
         </button>
 
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-card border border-slate-100 dark:border-slate-800 space-y-4">
-        <h3 className="font-extrabold text-slate-900 dark:text-white text-base border-b border-slate-100 dark:border-slate-800 pb-3">
-          Learner Statistics
-        </h3>
-
-        <div className="grid grid-cols-2 gap-3 text-xs">
-          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-            <span className="font-bold text-slate-400 uppercase block">Current Difficulty</span>
-            <span className="text-base font-black text-brand-600 dark:text-brand-400">
-              Level {profile.currentDifficulty}
-            </span>
-          </div>
-
-          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-            <span className="font-bold text-slate-400 uppercase block">Total Words</span>
-            <span className="text-base font-black text-slate-900 dark:text-white">
-              {stats.totalWordsPracticed}
-            </span>
-          </div>
-
-          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-            <span className="font-bold text-slate-400 uppercase block">Average Score</span>
-            <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
-              {stats.averageAccuracy}%
-            </span>
-          </div>
-
-          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-            <span className="font-bold text-slate-400 uppercase block">Longest Streak</span>
-            <span className="text-base font-black text-amber-600 dark:text-amber-400 flex items-center gap-1">
-              <Flame className="w-4 h-4 fill-amber-500" />
-              {stats.longestStreak} days
-            </span>
-          </div>
-        </div>
+      {/* Danger Zone: Reset Data */}
+      <div className="pt-4 border-t-2 border-slate-100 dark:border-slate-800 flex justify-center">
+        <button
+          onClick={() => {
+            if (window.confirm("Are you sure you want to reset all profile data and start fresh?")) {
+              soundFX.playError();
+              onResetData();
+            }
+          }}
+          className="text-xs font-black text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-1.5"
+        >
+          <RotateCcw className="w-4 h-4" />
+          <span>Reset All Profile Data</span>
+        </button>
       </div>
-
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-card border border-slate-100 dark:border-slate-800 space-y-3">
-        <h3 className="font-extrabold text-slate-900 dark:text-white text-base border-b border-slate-100 dark:border-slate-800 pb-3">
-          Manage Profile & Data
-        </h3>
-
-        <div className="space-y-2">
-          <button
-            onClick={() => {
-              setResetType('progress');
-              setShowResetConfirm(true);
-            }}
-            className="w-full py-3 px-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-200 font-bold text-xs flex items-center justify-between transition-colors"
-          >
-            <span>Reset Learning Progress Only</span>
-            <RotateCcw className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={() => {
-              setResetType('profile');
-              setShowResetConfirm(true);
-            }}
-            className="w-full py-3 px-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-950/60 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-200 font-bold text-xs flex items-center justify-between transition-colors"
-          >
-            <span>Reset Everything (Full Profile & Data)</span>
-            <ShieldAlert className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {showResetConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-pop">
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-100 dark:border-slate-800 text-center space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-950 text-rose-600 mx-auto flex items-center justify-center">
-              <ShieldAlert className="w-8 h-8" />
-            </div>
-
-            <h4 className="font-extrabold text-slate-900 dark:text-white text-lg">
-              Are you sure?
-            </h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-              {resetType === 'progress' 
-                ? 'This will clear your words practiced, scores, and streak history.' 
-                : 'This will delete your profile and reset the entire app.'}
-            </p>
-
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                onClick={() => setShowResetConfirm(false)}
-                className="flex-1 py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmReset}
-                className="flex-1 py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md transition-colors"
-              >
-                Yes, Reset
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );

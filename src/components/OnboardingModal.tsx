@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Sparkles, User, GraduationCap, Calendar, ArrowRight, ShieldCheck, Check } from 'lucide-react';
-import type { StudentProfile, ClassLevel, AvatarChoice } from '../types';
-import { CLASS_LEVELS } from '../data/wordsData';
+import { User, Calendar, GraduationCap, ArrowRight, ShieldCheck, Check } from 'lucide-react';
+import type { StudentProfile, ClassLevel, AvatarStyle } from '../types';
 import { soundFX } from '../utils/soundFx';
 
 interface OnboardingModalProps {
@@ -10,12 +9,28 @@ interface OnboardingModalProps {
   onCancel?: () => void;
 }
 
-const AVATARS: { id: AvatarChoice; emoji: string; label: string; bg: string }[] = [
-  { id: 'lion', emoji: '🦁', label: 'Brave Lion', bg: 'from-amber-400 to-orange-500' },
-  { id: 'owl', emoji: '🦉', label: 'Wise Owl', bg: 'from-indigo-400 to-purple-600' },
-  { id: 'rocket', emoji: '🚀', label: 'Star Cadet', bg: 'from-blue-400 to-indigo-600' },
-  { id: 'star', emoji: '⭐', label: 'Super Star', bg: 'from-yellow-400 to-amber-500' },
-  { id: 'bear', emoji: '🐻', label: 'Friendly Bear', bg: 'from-emerald-400 to-teal-600' },
+const PRIMARY_CLASSES: ClassLevel[] = [
+  'Primary 1',
+  'Primary 2',
+  'Primary 3',
+  'Primary 4',
+  'Primary 5',
+  'Primary 6'
+];
+
+const JSS_CLASSES: ClassLevel[] = [
+  'JSS 1',
+  'JSS 2',
+  'JSS 3'
+];
+
+const AVATARS: { id: AvatarStyle; emoji: string; label: string; bg: string }[] = [
+  { id: 'Boy', emoji: '👦', label: 'Boy', bg: 'from-blue-400 to-indigo-500' },
+  { id: 'Girl', emoji: '👧', label: 'Girl', bg: 'from-pink-400 to-rose-500' },
+  { id: 'Student', emoji: '🧑‍🎓', label: 'Student', bg: 'from-purple-400 to-indigo-600' },
+  { id: 'Explorer', emoji: '🧭', label: 'Explorer', bg: 'from-emerald-400 to-teal-600' },
+  { id: 'Reader', emoji: '📚', label: 'Reader', bg: 'from-amber-400 to-orange-500' },
+  { id: 'Speaker', emoji: '🎤', label: 'Speaker', bg: 'from-violet-400 to-purple-600' },
 ];
 
 export const OnboardingModal: React.FC<OnboardingModalProps> = ({
@@ -26,7 +41,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   const [name, setName] = useState(existingProfile?.name || '');
   const [age, setAge] = useState<number | ''>(existingProfile?.age || 10);
   const [classLevel, setClassLevel] = useState<ClassLevel>(existingProfile?.classLevel || 'Primary 5');
-  const [avatarId, setAvatarId] = useState<AvatarChoice>(existingProfile?.avatarId || 'rocket');
+  const [avatarStyle, setAvatarStyle] = useState<AvatarStyle>(existingProfile?.avatarStyle || 'Student');
   const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -49,8 +64,9 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       name: name.trim(),
       age: Number(age),
       classLevel,
-      avatarId,
+      avatarStyle,
       currentDifficulty: existingProfile?.currentDifficulty || 1,
+      xp: existingProfile?.xp || 320,
       createdAt: existingProfile?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -59,57 +75,53 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-pop overflow-y-auto">
-      <div className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 dark:border-slate-800 relative overflow-hidden my-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-pop overflow-y-auto">
+      <div className="w-full max-w-xl bg-white dark:bg-slate-900 rounded-4xl p-6 sm:p-8 shadow-2xl border-4 border-slate-100 dark:border-slate-800 relative overflow-hidden my-auto">
         
-        {/* Glow backdrop decorative spots */}
-        <div className="absolute -top-20 -right-20 w-44 h-44 bg-brand-500/25 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-20 -left-20 w-44 h-44 bg-indigo-500/25 rounded-full blur-3xl pointer-events-none" />
+        {/* Glow ambient background spot */}
+        <div className="absolute -top-20 -right-20 w-44 h-44 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
 
         {/* Modal Header */}
         <div className="text-center mb-6">
-          <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-brand-600 via-indigo-600 to-purple-500 text-white mx-auto flex items-center justify-center shadow-lg shadow-brand-500/30 mb-3 animate-float">
-            <Sparkles className="w-8 h-8" />
-          </div>
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            Lerafin <span className="text-brand-600 dark:text-brand-400">Speak</span>
+            Let's get to know you
           </h2>
-          <p className="text-slate-600 dark:text-slate-300 font-medium text-sm mt-1">
-            "Improve your English, one word at a time."
+          <p className="text-slate-500 dark:text-slate-400 font-bold text-xs sm:text-sm mt-1">
+            Set up your SPELLON profile to get customized word recommendations.
           </p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/60 text-rose-700 dark:text-rose-300 text-xs font-semibold text-center">
+          <div className="mb-4 p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-bold text-center">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           
           {/* Avatar Selector */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
-              Choose your Learner Mascot
+            <label className="block text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+              Select Your Avatar
             </label>
-            <div className="flex items-center justify-center gap-3">
+            <div className="grid grid-cols-6 gap-2">
               {AVATARS.map((av) => (
                 <button
                   key={av.id}
                   type="button"
                   onClick={() => {
                     soundFX.playClick();
-                    setAvatarId(av.id);
+                    setAvatarStyle(av.id);
                   }}
-                  className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl transition-all relative ${
-                    avatarId === av.id
-                      ? 'scale-110 ring-4 ring-brand-500 ring-offset-2 dark:ring-offset-slate-900 shadow-lg'
-                      : 'opacity-70 hover:opacity-100 hover:scale-105'
+                  className={`aspect-square rounded-2xl flex flex-col items-center justify-center text-2xl transition-all relative ${
+                    avatarStyle === av.id
+                      ? 'scale-105 ring-4 ring-indigo-500 ring-offset-2 dark:ring-offset-slate-900 shadow-md'
+                      : 'opacity-70 hover:opacity-100'
                   } bg-gradient-to-tr ${av.bg}`}
                 >
                   <span>{av.emoji}</span>
-                  {avatarId === av.id && (
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-brand-600 text-white rounded-full flex items-center justify-center text-[10px]">
+                  {avatarStyle === av.id && (
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-indigo-600 text-white rounded-full flex items-center justify-center text-[10px]">
                       <Check className="w-3 h-3 stroke-[3]" />
                     </div>
                   )}
@@ -118,31 +130,29 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             </div>
           </div>
 
-          {/* Name Field */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
-              <User className="w-4 h-4 text-brand-500" />
-              What is your name?
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Enter your name (e.g. Ibrahim)"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                setError('');
-              }}
-              className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold text-base focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all"
-            />
-          </div>
+          {/* Name & Age Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                <User className="w-4 h-4 text-indigo-500" />
+                Student Name
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Enter your name (e.g. Ibrahim)"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setError('');
+                }}
+                className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+              />
+            </div>
 
-          {/* Age & Class Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-brand-500" />
+              <label className="block text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-indigo-500" />
                 Age
               </label>
               <input
@@ -150,57 +160,115 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 min={4}
                 max={20}
                 required
-                placeholder="Age (e.g. 10)"
+                placeholder="Age"
                 value={age}
                 onChange={(e) => {
                   setAge(e.target.value ? Number(e.target.value) : '');
                   setError('');
                 }}
-                className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold text-base focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
               />
             </div>
+          </div>
 
+          {/* Selectable Class Cards Grouped by PRIMARY & JSS */}
+          <div>
+            <label className="block text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
+              <GraduationCap className="w-4 h-4 text-indigo-500" />
+              Select Educational Class Level
+            </label>
+
+            {/* Primary Section */}
+            <div className="mb-3">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1.5">
+                PRIMARY SCHOOL
+              </span>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                {PRIMARY_CLASSES.map((lvl) => {
+                  const isSelected = classLevel === lvl;
+                  return (
+                    <button
+                      key={lvl}
+                      type="button"
+                      onClick={() => {
+                        soundFX.playClick();
+                        setClassLevel(lvl);
+                      }}
+                      className={`p-2.5 rounded-2xl font-black text-xs transition-all relative text-center border-2 ${
+                        isSelected
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-md scale-105'
+                          : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-300'
+                      }`}
+                    >
+                      {lvl.replace('Primary ', 'P')}
+                      {isSelected && (
+                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-400 text-slate-900 rounded-full flex items-center justify-center text-[10px]">
+                          <Check className="w-3 h-3 stroke-[3]" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* JSS Section */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
-                <GraduationCap className="w-4 h-4 text-brand-500" />
-                Class Level
-              </label>
-              <select
-                value={classLevel}
-                onChange={(e) => setClassLevel(e.target.value as ClassLevel)}
-                className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all cursor-pointer"
-              >
-                {CLASS_LEVELS.map((lvl) => (
-                  <option key={lvl} value={lvl}>
-                    {lvl}
-                  </option>
-                ))}
-              </select>
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1.5">
+                JUNIOR SECONDARY
+              </span>
+              <div className="grid grid-cols-3 gap-2">
+                {JSS_CLASSES.map((lvl) => {
+                  const isSelected = classLevel === lvl;
+                  return (
+                    <button
+                      key={lvl}
+                      type="button"
+                      onClick={() => {
+                        soundFX.playClick();
+                        setClassLevel(lvl);
+                      }}
+                      className={`p-3 rounded-2xl font-black text-xs transition-all relative text-center border-2 ${
+                        isSelected
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-md scale-105'
+                          : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-300'
+                      }`}
+                    >
+                      {lvl}
+                      {isSelected && (
+                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-400 text-slate-900 rounded-full flex items-center justify-center text-[10px]">
+                          <Check className="w-3 h-3 stroke-[3]" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
           </div>
 
-          <div className="flex items-center gap-2 pt-2 text-[11px] text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-2 pt-1 text-[11px] text-slate-500 dark:text-slate-400 font-bold">
             <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-            <span>Safe & Private. All practice data stays strictly on your device.</span>
+            <span>Safe for children. Profile data stays saved locally on your device.</span>
           </div>
 
           {/* Action Buttons */}
-          <div className="pt-3 flex items-center gap-3">
+          <div className="pt-2 flex items-center gap-3">
             {onCancel && (
               <button
                 type="button"
                 onClick={onCancel}
-                className="w-1/3 py-3.5 px-4 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="w-1/3 py-3.5 px-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 Cancel
               </button>
             )}
             <button
               type="submit"
-              className="flex-1 py-4 px-6 rounded-2xl bg-gradient-to-r from-brand-600 via-indigo-600 to-purple-600 hover:from-brand-700 hover:to-purple-700 text-white font-black shadow-lg shadow-brand-500/30 flex items-center justify-center gap-2 text-base transition-all btn-tactile"
+              className="btn-game btn-game-indigo flex-1 py-4 px-6 rounded-2xl text-base flex items-center justify-center gap-2"
             >
-              <span>Continue to App</span>
+              <span>Continue →</span>
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>

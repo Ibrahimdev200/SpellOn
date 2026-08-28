@@ -1,51 +1,46 @@
-import type { SpeechRate } from '../types';
-
-class SpeechService {
+export class SpeechService {
   private synth: SpeechSynthesis | null = null;
-  private voices: SpeechSynthesisVoice[] = [];
   private selectedVoice: SpeechSynthesisVoice | null = null;
 
   constructor() {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       this.synth = window.speechSynthesis;
-      this.initVoices();
+      this.loadVoices();
       if (this.synth.onvoiceschanged !== undefined) {
-        this.synth.onvoiceschanged = () => this.initVoices();
+        this.synth.onvoiceschanged = () => this.loadVoices();
       }
     }
   }
 
-  private initVoices(): void {
+  private loadVoices(): void {
     if (!this.synth) return;
-    this.voices = this.synth.getVoices();
-    const englishVoice = this.voices.find(v => 
-      v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha') || v.name.includes('Daniel'))
-    ) || this.voices.find(v => v.lang.startsWith('en')) || this.voices[0];
-
-    if (englishVoice) {
-      this.selectedVoice = englishVoice;
-    }
+    const voices = this.synth.getVoices();
+    const englishVoice = voices.find(
+      (v) => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.default)
+    );
+    this.selectedVoice = englishVoice || voices[0] || null;
   }
 
-  public isSupported(): boolean {
-    return !!this.synth;
-  }
-
-  public getAvailableVoices(): SpeechSynthesisVoice[] {
-    if (this.voices.length === 0 && this.synth) {
-      this.voices = this.synth.getVoices();
-    }
-    return this.voices.filter(v => v.lang.startsWith('en'));
+  public getVoices(): SpeechSynthesisVoice[] {
+    if (!this.synth) return [];
+    return this.synth.getVoices();
   }
 
   public setVoice(voiceURI: string): void {
-    const voice = this.voices.find(v => v.voiceURI === voiceURI);
-    if (voice) {
-      this.selectedVoice = voice;
+    if (!this.synth) return;
+    const voices = this.synth.getVoices();
+    const found = voices.find((v) => v.voiceURI === voiceURI);
+    if (found) {
+      this.selectedVoice = found;
     }
   }
 
-  public speak(text: string, rate: SpeechRate = 'normal', onEnd?: () => void, onError?: () => void): void {
+  public speak(
+    text: string, 
+    rate: 'slow' | 'normal' | 'fast' = 'normal',
+    onEnd?: () => void,
+    onError?: () => void
+  ): void {
     if (!this.synth) {
       if (onError) onError();
       return;
@@ -54,26 +49,19 @@ class SpeechService {
     this.synth.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-
     if (this.selectedVoice) {
       utterance.voice = this.selectedVoice;
     }
 
-    switch (rate) {
-      case 'slow':
-        utterance.rate = 0.7;
-        break;
-      case 'fast':
-        utterance.rate = 1.2;
-        break;
-      case 'normal':
-      default:
-        utterance.rate = 0.95;
-        break;
+    if (rate === 'slow') {
+      utterance.rate = 0.65;
+    } else if (rate === 'fast') {
+      utterance.rate = 1.15;
+    } else {
+      utterance.rate = 0.9;
     }
 
-    utterance.pitch = 1.05;
+    utterance.pitch = 1.0;
 
     if (onEnd) utterance.onend = () => onEnd();
     if (onError) utterance.onerror = () => onError();

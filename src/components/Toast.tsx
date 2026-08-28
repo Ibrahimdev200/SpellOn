@@ -1,44 +1,57 @@
 import React, { useEffect } from 'react';
-import { Trophy, X } from 'lucide-react';
+import { Award, Sparkles, X } from 'lucide-react';
 import type { Achievement } from '../types';
 
 interface ToastProps {
-  achievement: Achievement | null;
+  achievement?: Achievement | null;
+  message?: string | null;
   onClose: () => void;
 }
 
-export const Toast: React.FC<ToastProps> = ({ achievement, onClose }) => {
+export const Toast: React.FC<ToastProps> = ({ achievement, message, onClose }) => {
   useEffect(() => {
-    if (achievement) {
-      const timer = setTimeout(() => {
-        onClose();
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [achievement, onClose]);
+    const timer = setTimeout(() => {
+      onClose();
+    }, 4000);
 
-  if (!achievement) return null;
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  if (!achievement && !message) return null;
 
   return (
-    <div className="fixed top-16 right-4 left-4 sm:left-auto sm:w-96 z-50 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-3xl p-4 shadow-2xl flex items-center justify-between animate-pop">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shrink-0">
-          <Trophy className="w-6 h-6 animate-bounce-gentle" />
+    <div className="fixed bottom-20 sm:bottom-6 right-4 left-4 sm:left-auto sm:max-w-md z-50 animate-pop">
+      <div className="bg-gradient-to-r from-indigo-900 via-purple-900 to-indigo-950 text-white rounded-3xl p-4 shadow-2xl border-2 border-indigo-400/40 flex items-center justify-between gap-3">
+        
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-amber-400 text-slate-900 flex items-center justify-center text-2xl shrink-0 shadow-md">
+            {achievement ? <span>{achievement.icon}</span> : <Sparkles className="w-6 h-6 text-slate-900" />}
+          </div>
+
+          <div>
+            <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
+              <Award className="w-3 h-3" />
+              {achievement ? 'Achievement Unlocked!' : 'SPELLON Notification'}
+            </span>
+            <h4 className="font-black text-sm text-white leading-tight">
+              {achievement ? achievement.title : message}
+            </h4>
+            {achievement && (
+              <p className="text-xs text-indigo-200 font-medium line-clamp-1 mt-0.5">
+                {achievement.description}
+              </p>
+            )}
+          </div>
         </div>
-        <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-100">
-            Achievement Unlocked!
-          </span>
-          <h4 className="font-extrabold text-sm leading-tight">{achievement.title}</h4>
-          <p className="text-xs text-amber-50 leading-snug">{achievement.description}</p>
-        </div>
+
+        <button
+          onClick={onClose}
+          className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-300 hover:text-white transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
       </div>
-      <button 
-        onClick={onClose}
-        className="text-white/80 hover:text-white p-1"
-      >
-        <X className="w-4 h-4" />
-      </button>
     </div>
   );
 };

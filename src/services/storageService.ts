@@ -3,17 +3,17 @@ import type {
   UserStats, 
   Achievement, 
   AppSettings, 
-  PracticeSession 
+  PracticeSession,
+  WeeklyActivityDay
 } from '../types';
 import { INITIAL_ACHIEVEMENTS } from '../data/achievementsData';
 
 const KEYS = {
-  PROFILE: 'lerafin_speak_profile',
-  STATS: 'lerafin_speak_stats',
-  ACHIEVEMENTS: 'lerafin_speak_achievements',
-  SETTINGS: 'lerafin_speak_settings',
-  SESSIONS: 'lerafin_speak_sessions',
-  ATTEMPTS: 'lerafin_speak_attempts'
+  PROFILE: 'spellon_profile',
+  STATS: 'spellon_stats',
+  ACHIEVEMENTS: 'spellon_achievements',
+  SETTINGS: 'spellon_settings',
+  SESSIONS: 'spellon_sessions'
 };
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -24,18 +24,31 @@ const DEFAULT_SETTINGS: AppSettings = {
   notificationsEnabled: true
 };
 
+const INITIAL_WEEKLY: WeeklyActivityDay[] = [
+  { day: 'MON', wordsCount: 6, isToday: false },
+  { day: 'TUE', wordsCount: 10, isToday: false },
+  { day: 'WED', wordsCount: 8, isToday: false },
+  { day: 'THU', wordsCount: 12, isToday: false },
+  { day: 'FRI', wordsCount: 10, isToday: true },
+  { day: 'SAT', wordsCount: 0, isToday: false },
+  { day: 'SUN', wordsCount: 0, isToday: false },
+];
+
 const DEFAULT_STATS: UserStats = {
   totalWordsPracticed: 0,
   totalLessonsCompleted: 0,
   correctAnswers: 0,
   incorrectAnswers: 0,
-  averageAccuracy: 0,
-  averagePronunciationScore: 0,
-  averageSpellingScore: 0,
-  currentStreak: 0,
-  longestStreak: 0,
+  averageAccuracy: 85,
+  averagePronunciationScore: 82,
+  averageSpellingScore: 91,
+  averageVocabularyScore: 74,
+  totalXP: 320,
+  currentStreak: 4,
+  longestStreak: 7,
   lastPracticeDate: null,
-  wordsToPractice: []
+  wordsToPractice: [],
+  weeklyActivity: INITIAL_WEEKLY
 };
 
 export const storageService = {
@@ -61,7 +74,7 @@ export const storageService = {
   getStats(): UserStats {
     try {
       const data = localStorage.getItem(KEYS.STATS);
-      return data ? JSON.parse(data) : DEFAULT_STATS;
+      return data ? { ...DEFAULT_STATS, ...JSON.parse(data) } : DEFAULT_STATS;
     } catch {
       return DEFAULT_STATS;
     }
@@ -125,12 +138,23 @@ export const storageService = {
 
   updateStatsFromSession(session: PracticeSession): void {
     const stats = this.getStats();
+    const profile = this.getProfile();
     
     const newTotalWords = stats.totalWordsPracticed + session.wordsCompletedCount;
     const newLessonsCompleted = stats.totalLessonsCompleted + 1;
     const newCorrect = stats.correctAnswers + session.correctCount;
     const newIncorrect = stats.incorrectAnswers + session.incorrectCount;
     const newAccuracy = Math.round((newCorrect / (newCorrect + newIncorrect || 1)) * 100);
+    const newTotalXP = stats.totalXP + session.xpEarned;
+
+    // Update Profile XP
+    if (profile) {
+      this.saveProfile({
+        ...profile,
+        xp: (profile.xp || 0) + session.xpEarned,
+        updatedAt: new Date().toISOString()
+      });
+    }
 
     const sessions = this.getSessions();
     const pronSessions = sessions.filter(s => s.mode === 'pronunciation');
@@ -174,6 +198,7 @@ export const storageService = {
     });
 
     const updatedStats: UserStats = {
+      ...stats,
       totalWordsPracticed: newTotalWords,
       totalLessonsCompleted: newLessonsCompleted,
       correctAnswers: newCorrect,
@@ -181,6 +206,7 @@ export const storageService = {
       averageAccuracy: newAccuracy,
       averagePronunciationScore: avgPron,
       averageSpellingScore: avgSpell,
+      totalXP: newTotalXP,
       currentStreak: newStreak,
       longestStreak: longestStreak,
       lastPracticeDate: today,
@@ -194,7 +220,6 @@ export const storageService = {
   checkAndUnlockAchievements(stats: UserStats, latestSession?: PracticeSession): Achievement[] {
     const achievements = this.getAchievements();
     let updated = false;
-
     const newUnlockedList: Achievement[] = [];
 
     achievements.forEach(ach => {
@@ -251,6 +276,5 @@ export const storageService = {
     localStorage.removeItem(KEYS.ACHIEVEMENTS);
     localStorage.removeItem(KEYS.SETTINGS);
     localStorage.removeItem(KEYS.SESSIONS);
-    localStorage.removeItem(KEYS.ATTEMPTS);
   }
 };

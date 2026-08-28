@@ -1,14 +1,19 @@
-import { useEffect, useState } from 'react';
-import type { StudentProfile, UserStats, AppSettings, Achievement, PracticeSession, WordAttempt } from './types';
+import React, { useState, useEffect } from 'react';
+import type { StudentProfile, UserStats, AppSettings, PracticeSession, WordAttempt, PracticeMode } from './types';
 import { storageService } from './services/storageService';
-import { adaptiveEngine } from './services/adaptiveEngine';
-import { Header } from './components/Header';
-import { BottomNavigation } from './components/BottomNavigation';
+import { soundFX } from './utils/soundFx';
+
+import { SplashScreen } from './components/SplashScreen';
+import { OnboardingFlow } from './components/OnboardingFlow';
 import { OnboardingModal } from './components/OnboardingModal';
+import { Header } from './components/Header';
+import { Sidebar } from './components/Sidebar';
+import { BottomNavigation } from './components/BottomNavigation';
 import { InstallPrompt } from './components/InstallPrompt';
 import { Toast } from './components/Toast';
 
 import { Dashboard } from './pages/Dashboard';
+import { PracticeHub } from './pages/PracticeHub';
 import { PronunciationMode } from './pages/PronunciationMode';
 import { SpellingMode } from './pages/SpellingMode';
 import { LessonComplete } from './pages/LessonComplete';
@@ -16,24 +21,23 @@ import { ProgressPage } from './pages/ProgressPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SettingsPage } from './pages/SettingsPage';
 
-export function App() {
+export const App: React.FC = () => {
+  const [showSplash, setShowSplash] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showProfileSetup, setShowProfileSetup] = useState(false);
+
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [stats, setStats] = useState<UserStats>(storageService.getStats());
   const [settings, setSettings] = useState<AppSettings>(storageService.getSettings());
-  const [achievements, setAchievements] = useState<Achievement[]>(storageService.getAchievements());
-  const [sessions, setSessions] = useState<PracticeSession[]>(storageService.getSessions());
 
   const [currentRoute, setCurrentRoute] = useState<string>('/dashboard');
-  const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
-  const [lastSession, setLastSession] = useState<PracticeSession | null>(null);
-  const [unlockedToast, setUnlockedToast] = useState<Achievement | null>(null);
+  const [activeSession, setActiveSession] = useState<PracticeSession | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const savedProfile = storageService.getProfile();
     if (savedProfile) {
       setProfile(savedProfile);
-    } else {
-      setShowOnboarding(true);
     }
   }, []);
 
@@ -43,206 +47,223 @@ export function App() {
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [settings.theme]);
+    soundFX.setEnabled(settings.soundEnabled);
+  }, [settings]);
 
-  const handleOnboardingComplete = (newProfile: StudentProfile) => {
-    storageService.saveProfile(newProfile);
-    setProfile(newProfile);
-    setShowOnboarding(false);
-    setCurrentRoute('/dashboard');
+  const handleFinishSplash = () => {
+    setShowSplash(false);
+    if (!profile) {
+      setShowOnboarding(true);
+    }
   };
 
-  const handleUpdateSettings = (newSettingsPartial: Partial<AppSettings>) => {
-    const updated = { ...settings, ...newSettingsPartial };
+  const handleFinishOnboardingFlow = () => {
+    setShowOnboarding(false);
+    setShowProfileSetup(true);
+  };
+
+  const handleSaveProfile = (newProfile: StudentProfile) => {
+    storageService.saveProfile(newProfile);
+    setProfile(newProfile);
+    setShowProfileSetup(false);
+    setToastMessage(`Welcome to SPELLON, ${newProfile.name}! 🎉`);
+  };
+
+  const handleUpdateSettings = (newSettings: Partial<AppSettings>) => {
+    const updated = { ...settings, ...newSettings };
     setSettings(updated);
     storageService.saveSettings(updated);
   };
 
-  const handleCompleteLesson = (mode: 'pronunciation' | 'spelling', attempts: WordAttempt[]) => {
+  const handleStartPracticeMode = (mode: PracticeMode) => {
+    soundFX.playClick();
+    if (mode === 'pronunciation') {
+      setCurrentRoute('/pronunciation');
+    } else if (mode === 'spelling') {
+      setCurrentRoute('/spelling');
+    } else {
+      setCurrentRoute('/pronunciation');
+    }
+  };
+
+  const handleCompleteLesson = (attempts: WordAttempt[], mode: PracticeMode) => {
     if (!profile) return;
 
-    const wordsCount = attempts.length;
     const correctCount = attempts.filter(a => a.correct).length;
-    const incorrectCount = wordsCount - correctCount;
-    const accuracy = Math.round((correctCount / (wordsCount || 1)) * 100);
-
-    const avgScore = Math.round(
-      attempts.reduce((acc, curr) => acc + curr.score, 0) / (wordsCount || 1)
-    );
+    const incorrectCount = attempts.length - correctCount;
+    const accuracy = Math.round((correctCount / attempts.length) * 100);
+    const xpEarned = attempts.reduce((acc, a) => acc + (a.xpEarned || 10), 0) + (accuracy >= 80 ? 50 : 20);
 
     const session: PracticeSession = {
-      id: `sess_${Date.now()}`,
+      id: `session_${Date.now()}`,
       mode,
       classLevel: profile.classLevel,
       attempts,
-      wordsCompletedCount: wordsCount,
+      wordsCompletedCount: attempts.length,
       correctCount,
       incorrectCount,
       accuracy,
-      pronunciationScore: mode === 'pronunciation' ? avgScore : stats.averagePronunciationScore,
-      spellingScore: mode === 'spelling' ? avgScore : stats.averageSpellingScore,
+      pronunciationScore: mode === 'pronunciation' ? accuracy : 85,
+      spellingScore: mode === 'spelling' ? accuracy : 90,
+      xpEarned,
       durationSeconds: 120,
       createdAt: new Date().toISOString()
     };
 
     storageService.saveSession(session);
+    setActiveSession(session);
+    setStats(storageService.getStats());
+    setProfile(storageService.getProfile());
 
-    const updatedStats = storageService.getStats();
-    setStats(updatedStats);
-    setSessions(storageService.getSessions());
-
-    const updatedProfile = adaptiveEngine.updateAdaptiveDifficulty(profile, accuracy);
-    setProfile(updatedProfile);
-
-    const newlyUnlocked = storageService.checkAndUnlockAchievements(updatedStats, session);
-    setAchievements(storageService.getAchievements());
-    if (newlyUnlocked.length > 0) {
-      setUnlockedToast(newlyUnlocked[0]);
-    }
-
-    setLastSession(session);
-    setCurrentRoute('/lesson-complete');
+    setCurrentRoute('/complete');
   };
 
-  const handleResetProgress = () => {
-    const freshStats: UserStats = {
-      totalWordsPracticed: 0,
-      totalLessonsCompleted: 0,
-      correctAnswers: 0,
-      incorrectAnswers: 0,
-      averageAccuracy: 0,
-      averagePronunciationScore: 0,
-      averageSpellingScore: 0,
-      currentStreak: 0,
-      longestStreak: 0,
-      lastPracticeDate: null,
-      wordsToPractice: []
-    };
-    storageService.saveStats(freshStats);
-    setStats(freshStats);
-    setSessions([]);
-    localStorage.removeItem('lerafin_speak_sessions');
-  };
-
-  const handleResetProfile = () => {
+  const handleResetAllData = () => {
     storageService.resetAllData();
     setProfile(null);
-    setShowOnboarding(true);
     setStats(storageService.getStats());
-    setSessions([]);
+    setShowOnboarding(true);
+    setCurrentRoute('/dashboard');
+    setToastMessage("Data reset successfully.");
   };
 
+  if (showSplash) {
+    return <SplashScreen onFinish={handleFinishSplash} />;
+  }
+
+  if (showOnboarding) {
+    return <OnboardingFlow onFinishOnboarding={handleFinishOnboardingFlow} />;
+  }
+
+  if (showProfileSetup || !profile) {
+    return (
+      <OnboardingModal
+        onComplete={handleSaveProfile}
+        existingProfile={profile}
+        onCancel={profile ? () => setShowProfileSetup(false) : undefined}
+      />
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col lg:flex-row">
       
-      <Header
+      {/* Desktop Left Sidebar */}
+      <Sidebar
+        currentRoute={currentRoute}
+        onNavigate={setCurrentRoute}
         profile={profile}
         stats={stats}
         settings={settings}
         onUpdateSettings={handleUpdateSettings}
-        onNavigate={(route) => setCurrentRoute(route)}
       />
 
-      <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0">
         
-        {showOnboarding && (
-          <OnboardingModal
-            existingProfile={profile}
-            onComplete={handleOnboardingComplete}
-            onCancel={profile ? () => setShowOnboarding(false) : undefined}
-          />
-        )}
+        {/* Mobile Header */}
+        <Header
+          profile={profile}
+          stats={stats}
+          settings={settings}
+          onUpdateSettings={handleUpdateSettings}
+          onNavigate={setCurrentRoute}
+        />
 
-        {profile && !showOnboarding && (
-          <>
-            {currentRoute === '/dashboard' && (
-              <Dashboard
-                profile={profile}
-                stats={stats}
-                onStartPractice={(mode) => setCurrentRoute(mode === 'pronunciation' ? '/pronunciation' : '/spelling')}
-                onNavigate={(route) => setCurrentRoute(route)}
-                onEditProfile={() => setShowOnboarding(true)}
-              />
-            )}
+        <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+          
+          {currentRoute === '/dashboard' && (
+            <Dashboard
+              profile={profile}
+              stats={stats}
+              onStartPractice={handleStartPracticeMode}
+              onNavigate={setCurrentRoute}
+              onEditProfile={() => setShowProfileSetup(true)}
+            />
+          )}
 
-            {currentRoute === '/pronunciation' && (
-              <PronunciationMode
-                profile={profile}
-                stats={stats}
-                onCompleteLesson={(attempts) => handleCompleteLesson('pronunciation', attempts)}
-                onExit={() => setCurrentRoute('/dashboard')}
-                onSwitchToSpelling={() => setCurrentRoute('/spelling')}
-              />
-            )}
+          {currentRoute === '/practice' && (
+            <PracticeHub
+              onStartPractice={handleStartPracticeMode}
+            />
+          )}
 
-            {currentRoute === '/spelling' && (
-              <SpellingMode
-                profile={profile}
-                stats={stats}
-                onCompleteLesson={(attempts) => handleCompleteLesson('spelling', attempts)}
-                onExit={() => setCurrentRoute('/dashboard')}
-              />
-            )}
+          {currentRoute === '/pronunciation' && (
+            <PronunciationMode
+              profile={profile}
+              stats={stats}
+              onCompleteLesson={(attempts) => handleCompleteLesson(attempts, 'pronunciation')}
+              onExit={() => setCurrentRoute('/dashboard')}
+              onSwitchToSpelling={() => setCurrentRoute('/spelling')}
+            />
+          )}
 
-            {currentRoute === '/lesson-complete' && lastSession && (
-              <LessonComplete
-                profile={profile}
-                stats={stats}
-                session={lastSession}
-                onPracticeAgain={() => setCurrentRoute(lastSession.mode === 'pronunciation' ? '/pronunciation' : '/spelling')}
-                onNextLesson={() => setCurrentRoute('/pronunciation')}
-                onBackToDashboard={() => setCurrentRoute('/dashboard')}
-              />
-            )}
+          {currentRoute === '/spelling' && (
+            <SpellingMode
+              profile={profile}
+              stats={stats}
+              onCompleteLesson={(attempts) => handleCompleteLesson(attempts, 'spelling')}
+              onExit={() => setCurrentRoute('/dashboard')}
+            />
+          )}
 
-            {currentRoute === '/progress' && (
-              <ProgressPage
-                profile={profile}
-                stats={stats}
-                achievements={achievements}
-                sessions={sessions}
-                onStartPractice={(mode) => setCurrentRoute(mode === 'pronunciation' ? '/pronunciation' : '/spelling')}
-              />
-            )}
+          {currentRoute === '/complete' && activeSession && (
+            <LessonComplete
+              profile={profile}
+              stats={stats}
+              session={activeSession}
+              onPracticeAgain={() => setCurrentRoute('/pronunciation')}
+              onNextLesson={() => setCurrentRoute('/pronunciation')}
+              onBackToDashboard={() => setCurrentRoute('/dashboard')}
+            />
+          )}
 
-            {currentRoute === '/profile' && (
-              <ProfilePage
-                profile={profile}
-                stats={stats}
-                onEditProfile={() => setShowOnboarding(true)}
-                onResetProgress={handleResetProgress}
-                onResetProfile={handleResetProfile}
-              />
-            )}
+          {currentRoute === '/progress' && (
+            <ProgressPage
+              profile={profile}
+              stats={stats}
+              onStartPractice={handleStartPracticeMode}
+            />
+          )}
 
-            {currentRoute === '/settings' && (
-              <SettingsPage
-                settings={settings}
-                onUpdateSettings={handleUpdateSettings}
-                onResetProgress={handleResetProgress}
-              />
-            )}
-          </>
-        )}
+          {currentRoute === '/profile' && (
+            <ProfilePage
+              profile={profile}
+              stats={stats}
+              onEditProfile={() => setShowProfileSetup(true)}
+              onNavigate={setCurrentRoute}
+              onResetData={handleResetAllData}
+            />
+          )}
 
-      </main>
+          {currentRoute === '/settings' && (
+            <SettingsPage
+              settings={settings}
+              onUpdateSettings={handleUpdateSettings}
+              onResetData={handleResetAllData}
+            />
+          )}
 
-      <InstallPrompt />
+        </main>
 
-      <Toast
-        achievement={unlockedToast}
-        onClose={() => setUnlockedToast(null)}
-      />
-
-      {profile && !showOnboarding && (
+        {/* Mobile Bottom Navigation */}
         <BottomNavigation
           currentRoute={currentRoute}
-          onNavigate={(route) => setCurrentRoute(route)}
+          onNavigate={setCurrentRoute}
+        />
+
+      </div>
+
+      <InstallPrompt />
+      {toastMessage && (
+        <Toast
+          message={toastMessage}
+          onClose={() => setToastMessage(null)}
         />
       )}
 
     </div>
   );
-}
+};
 
 export default App;

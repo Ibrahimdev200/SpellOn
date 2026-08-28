@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame, Sparkles, Volume2, VolumeX, Moon, Sun, Settings } from 'lucide-react';
+import { Flame, Sparkles, Volume2, VolumeX, Moon, Sun, Settings, Star } from 'lucide-react';
 import type { StudentProfile, UserStats, AppSettings } from '../types';
 import { soundFX } from '../utils/soundFx';
 
@@ -11,14 +11,6 @@ interface HeaderProps {
   onNavigate: (route: string) => void;
 }
 
-const AVATAR_EMOJIS: Record<string, string> = {
-  lion: '🦁',
-  owl: '🦉',
-  rocket: '🚀',
-  star: '⭐',
-  bear: '🐻'
-};
-
 export const Header: React.FC<HeaderProps> = ({
   profile,
   stats,
@@ -26,13 +18,11 @@ export const Header: React.FC<HeaderProps> = ({
   onUpdateSettings,
   onNavigate
 }) => {
-  const avatarEmoji = profile ? AVATAR_EMOJIS[profile.avatarId || 'rocket'] || '🚀' : '🚀';
-
   return (
-    <header className="sticky top-0 z-30 w-full glass-panel border-b border-slate-200/80 dark:border-slate-800/80 px-4 py-3 transition-all">
+    <header className="sticky top-0 z-30 w-full glass-panel border-b border-slate-200/80 dark:border-slate-800/80 px-4 py-3 transition-all lg:hidden">
       <div className="max-w-4xl mx-auto flex items-center justify-between">
         
-        {/* Brand & App Title */}
+        {/* Brand Logo */}
         <div 
           onClick={() => {
             soundFX.playClick();
@@ -40,46 +30,41 @@ export const Header: React.FC<HeaderProps> = ({
           }}
           className="flex items-center gap-2.5 cursor-pointer group"
         >
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-indigo-500 text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
             <Sparkles className="w-5 h-5 animate-pulse-subtle" />
           </div>
           <div>
-            <h1 className="font-black text-lg leading-none tracking-tight text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors">
-              Lerafin<span className="text-brand-500">Speak</span>
+            <h1 className="font-black text-lg leading-none tracking-widest uppercase text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+              SPELLON
             </h1>
-            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+            <p className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
               Learn. Speak. Improve.
             </p>
           </div>
         </div>
 
-        {/* Right Action Badges */}
+        {/* Action Badges */}
         <div className="flex items-center gap-2">
           
+          {/* XP Badge */}
+          {profile && (
+            <div 
+              title="Player XP"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/50 text-amber-600 dark:text-amber-400 font-black text-xs"
+            >
+              <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+              <span>{profile.xp || 320} XP</span>
+            </div>
+          )}
+
           {/* Streak Counter */}
           <div 
             title="Current Practice Streak"
-            className="flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/50 text-amber-600 dark:text-amber-400 font-black text-xs shadow-xs"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-orange-50 dark:bg-orange-950/50 border border-orange-200 dark:border-orange-800/50 text-orange-600 dark:text-orange-400 font-black text-xs"
           >
-            <Flame className="w-4 h-4 fill-amber-500 text-amber-500 animate-bounce-gentle" />
+            <Flame className="w-4 h-4 fill-orange-500 text-orange-500 animate-bounce-gentle" />
             <span>{stats.currentStreak}d</span>
           </div>
-
-          {/* Student Profile Mascot Badge */}
-          {profile && (
-            <div 
-              onClick={() => {
-                soundFX.playClick();
-                onNavigate('/profile');
-              }}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800/60 text-brand-700 dark:text-brand-300 font-bold text-xs cursor-pointer hover:bg-brand-100 dark:hover:bg-brand-900 transition-colors"
-            >
-              <span>{avatarEmoji} {profile.name}</span>
-              <span className="px-1.5 py-0.5 rounded-md bg-brand-200 dark:bg-brand-800 text-[10px]">
-                {profile.classLevel}
-              </span>
-            </div>
-          )}
 
           {/* Sound Toggle */}
           <button
@@ -90,7 +75,7 @@ export const Header: React.FC<HeaderProps> = ({
             title={settings.soundEnabled ? "Mute sound effects" : "Enable sound effects"}
             className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            {settings.soundEnabled ? <Volume2 className="w-4 h-4 text-brand-600" /> : <VolumeX className="w-4 h-4 text-slate-400" />}
+            {settings.soundEnabled ? <Volume2 className="w-4 h-4 text-indigo-600" /> : <VolumeX className="w-4 h-4 text-slate-400" />}
           </button>
 
           {/* Dark / Light Theme Toggle */}

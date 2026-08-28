@@ -1,23 +1,17 @@
 {
-  "name": "Lerafin Speak",
-  "short_name": "LerafinSpeak",
-  "description": "Learn. Speak. Improve. Educational pronunciation and spelling app for children & students.",
+  "name": "SPELLON",
+  "short_name": "SPELLON",
+  "description": "Learn. Speak. Improve. Premium interactive English pronunciation & spelling app for students.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",
-  "theme_color": "#6d33eb",
+  "theme_color": "#6366f1",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/favicon.svg",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ]

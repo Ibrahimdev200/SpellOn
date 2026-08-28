@@ -7,8 +7,9 @@ import {
   RotateCcw, 
   ArrowRight, 
   Home, 
-  CheckCircle2, 
-  XCircle
+  Star, 
+  Mic, 
+  Keyboard
 } from 'lucide-react';
 import type { StudentProfile, UserStats, PracticeSession } from '../types';
 import { soundFX } from '../utils/soundFx';
@@ -34,8 +35,8 @@ export const LessonComplete: React.FC<LessonCompleteProps> = ({
     soundFX.playVictory();
     try {
       confetti({
-        particleCount: 120,
-        spread: 80,
+        particleCount: 140,
+        spread: 90,
         origin: { y: 0.55 }
       });
     } catch {
@@ -46,77 +47,90 @@ export const LessonComplete: React.FC<LessonCompleteProps> = ({
   return (
     <div className="max-w-xl mx-auto space-y-6 pb-24 animate-pop">
       
-      <div className="bg-gradient-to-r from-brand-600 via-indigo-600 to-purple-600 rounded-3xl p-8 text-white text-center shadow-glow relative overflow-hidden">
-        <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md mx-auto flex items-center justify-center mb-4 border border-white/30 shadow-inner">
+      {/* Hero Banner */}
+      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 rounded-4xl p-8 text-white text-center shadow-2xl relative overflow-hidden border-4 border-white/20">
+        <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md mx-auto flex items-center justify-center mb-4 border-2 border-white/30 shadow-inner animate-float-slow">
           <Trophy className="w-10 h-10 text-amber-300 animate-bounce-gentle" />
         </div>
 
-        <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
-          🎉 Lesson Complete!
+        <div className="text-4xl mb-1">🎉</div>
+        <h2 className="text-3xl sm:text-4xl font-black tracking-tight uppercase">
+          LESSON COMPLETE!
         </h2>
-        <p className="text-brand-100 font-bold text-base mt-1">
-          Great job, {profile.name}!
+        <p className="text-indigo-100 font-bold text-base mt-1">
+          "You did an amazing job, {profile.name}!"
         </p>
 
-        <div className="inline-flex items-center gap-2 mt-4 px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-md text-white font-extrabold text-xs border border-white/20">
-          <Flame className="w-4 h-4 text-amber-300 fill-amber-300" />
-          <span>Current Streak: {stats.currentStreak} days</span>
+        <div className="flex items-center justify-center gap-3 mt-4">
+          <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-md text-white font-black text-xs border border-white/20">
+            <Flame className="w-4 h-4 text-amber-300 fill-amber-300" />
+            <span>🔥 {stats.currentStreak} DAY STREAK</span>
+          </div>
+
+          <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-amber-400/20 text-amber-300 font-black text-xs border border-amber-300/30">
+            <Star className="w-4 h-4 fill-amber-300" />
+            <span>⭐ +{session.xpEarned || 120} XP</span>
+          </div>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-card border border-slate-100 dark:border-slate-800 space-y-4">
-        <h3 className="font-extrabold text-slate-900 dark:text-white text-base border-b border-slate-100 dark:border-slate-800 pb-3 flex items-center gap-2">
-          <Target className="w-5 h-5 text-brand-500" />
-          <span>Your Results</span>
+      {/* Results Breakdown Grid */}
+      <div className="game-panel p-6 shadow-xl space-y-4">
+        <h3 className="font-black text-slate-900 dark:text-white text-base border-b border-slate-100 dark:border-slate-800 pb-3 flex items-center gap-2 uppercase tracking-wide">
+          <Target className="w-5 h-5 text-indigo-500" />
+          <span>LESSON SUMMARY</span>
         </h3>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-            <span className="text-[11px] font-bold text-slate-400 uppercase">Words Completed</span>
-            <p className="text-2xl font-black text-slate-900 dark:text-white">{session.wordsCompletedCount}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          
+          <div className="p-4 rounded-3xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-center">
+            <span className="text-[10px] font-black uppercase text-slate-400 block tracking-wider">WORDS</span>
+            <p className="text-3xl font-black text-slate-900 dark:text-white">{session.wordsCompletedCount}</p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-            <span className="text-[11px] font-bold text-slate-400 uppercase">Overall Accuracy</span>
-            <p className="text-2xl font-black text-brand-600 dark:text-brand-400">{session.accuracy}%</p>
+          <div className="p-4 rounded-3xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-center">
+            <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 block tracking-wider">CORRECT</span>
+            <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400">{session.correctCount}</p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/40">
-            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              Correct
-            </span>
-            <p className="text-2xl font-black text-emerald-700 dark:text-emerald-300">{session.correctCount}</p>
+          <div className="p-4 rounded-3xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-center col-span-2 sm:col-span-1">
+            <span className="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 block tracking-wider">ACCURACY</span>
+            <p className="text-3xl font-black text-indigo-600 dark:text-indigo-400">{session.accuracy}%</p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-rose-50/60 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900/40">
-            <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase flex items-center gap-1">
-              <XCircle className="w-3.5 h-3.5" />
-              Needs Practice
-            </span>
-            <p className="text-2xl font-black text-rose-700 dark:text-rose-300">{session.incorrectCount}</p>
+        </div>
+
+        {/* Pronunciation & Spelling Scores */}
+        <div className="grid grid-cols-2 gap-3 pt-2">
+          <div className="p-4 rounded-3xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Mic className="w-5 h-5 text-purple-600" />
+              <span className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase">PRONUNCIATION</span>
+            </div>
+            <span className="text-xl font-black text-purple-600 dark:text-purple-400">{session.pronunciationScore || session.accuracy}%</span>
+          </div>
+
+          <div className="p-4 rounded-3xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Keyboard className="w-5 h-5 text-blue-600" />
+              <span className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase">SPELLING</span>
+            </div>
+            <span className="text-xl font-black text-blue-600 dark:text-blue-400">{session.spellingScore || session.accuracy}%</span>
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-brand-50 dark:bg-brand-950/50 border border-brand-200/60 dark:border-brand-800/60 flex items-center justify-between">
-          <span className="text-xs font-bold text-brand-700 dark:text-brand-300 capitalize">
-            {session.mode} Score Average
-          </span>
-          <span className="text-xl font-extrabold text-brand-600 dark:text-brand-400">
-            {session.mode === 'pronunciation' ? session.pronunciationScore : session.spellingScore}%
-          </span>
-        </div>
       </div>
 
+      {/* Action Buttons */}
       <div className="space-y-3">
         <button
           onClick={() => {
             soundFX.playClick();
             onNextLesson();
           }}
-          className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-700 hover:to-indigo-700 text-white font-extrabold shadow-lg shadow-brand-500/25 flex items-center justify-center gap-2 text-base transition-all btn-tactile"
+          className="btn-game btn-game-indigo w-full py-4 px-6 rounded-2xl text-base flex items-center justify-center gap-2 shadow-lg"
         >
-          <span>Next Lesson</span>
+          <span>CONTINUE →</span>
           <ArrowRight className="w-5 h-5" />
         </button>
 
@@ -126,10 +140,10 @@ export const LessonComplete: React.FC<LessonCompleteProps> = ({
               soundFX.playClick();
               onPracticeAgain();
             }}
-            className="py-3.5 px-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold flex items-center justify-center gap-2 transition-colors text-sm shadow-xs"
+            className="btn-game py-3.5 px-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs flex items-center justify-center gap-2"
           >
             <RotateCcw className="w-4 h-4" />
-            <span>Practice Again</span>
+            <span>PRACTICE AGAIN</span>
           </button>
 
           <button
@@ -137,10 +151,10 @@ export const LessonComplete: React.FC<LessonCompleteProps> = ({
               soundFX.playClick();
               onBackToDashboard();
             }}
-            className="py-3.5 px-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold flex items-center justify-center gap-2 transition-colors text-sm shadow-xs"
+            className="btn-game py-3.5 px-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs flex items-center justify-center gap-2"
           >
             <Home className="w-4 h-4" />
-            <span>Dashboard</span>
+            <span>DASHBOARD</span>
           </button>
         </div>
       </div>
